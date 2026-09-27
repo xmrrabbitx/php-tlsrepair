@@ -1,0 +1,19 @@
+{
+    "name": "xmrrabbitx/tlsrepair",
+    "type": "php-ext",
+    "license": "BSD-3-Clause",
+    "description": "Describe your extension here",
+    "require": {
+        "php": "^8.3"
+    },
+    "php-ext": {
+        "extension-name": "tlsrepair",
+        "configure-options": [
+            {
+                "name": "enable-tlsrepair",
+                "needs-value": false,
+                "description": "whether to enable tlsrepair support"
+            }
+        ]
+    }
+}

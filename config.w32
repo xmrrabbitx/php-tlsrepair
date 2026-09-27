@@ -1,0 +1,7 @@
+ARG_ENABLE('tlsrepair', 'tlsrepair support', 'no');
+
+if (PHP_TLSREPAIR != 'no') {
+	AC_DEFINE('HAVE_TLSREPAIR', 1, "Define to 1 if the PHP extension 'tlsrepair' is available.");
+
+	EXTENSION('tlsrepair', 'tlsrepair.c', null, '/DZEND_ENABLE_STATIC_TSRMLS_CACHE=1');
+}
