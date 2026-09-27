@@ -62,6 +62,7 @@ Build the extension using the standard PHP extension build process:
 
 ```bash
 git clone https://github.com/xmrrabbitx/php-tlsrepair.git
+cd php-tlsrepair
 ../bin/phpize
 ./configure --with-php-config=$HOME/myphp/bin/php-config
 make -jn 
