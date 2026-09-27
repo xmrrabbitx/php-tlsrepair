@@ -858,7 +858,7 @@ enable_option_checking
 with_libdir
 with_php_config
 enable_
-enable_tlsrepair
+with_tlsrepair
 enable_shared
 enable_static
 enable_fast_install
@@ -1508,7 +1508,7 @@ Optional Features and Packages:
   --with-php-config=PATH  Path to php-config [php-config]
 
 Extension:
-  --enable-tlsrepair      Enable tlsrepair support
+  --with-tlsrepair=DIR    Include TLSRepair support
 
 Libtool:
   --enable-shared=PKGS    Build shared libraries default=yes
@@ -4037,16 +4037,17 @@ $as_echo "${T_MD}Configuring extension${T_ME}" >&6; }
 
 
 
-php_enable_tlsrepair=no
+php_with_tlsrepair=yes
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether to enable tlsrepair support" >&5
-$as_echo_n "checking whether to enable tlsrepair support... " >&6; }
-# Check whether --enable-tlsrepair was given.
-if test "${enable_tlsrepair+set}" = set; then :
-  enableval=$enable_tlsrepair; PHP_TLSREPAIR=$enableval
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for TLSRepair support" >&5
+$as_echo_n "checking for TLSRepair support... " >&6; }
+
+# Check whether --with-tlsrepair was given.
+if test "${with_tlsrepair+set}" = set; then :
+  withval=$with_tlsrepair; PHP_TLSREPAIR=$withval
 else
 
-  PHP_TLSREPAIR=no
+  PHP_TLSREPAIR=yes
   test "$PHP_ENABLE_ALL" && PHP_TLSREPAIR=$PHP_ENABLE_ALL
 
 fi
@@ -4084,12 +4085,55 @@ $as_echo "$ext_output" >&6; }
 
 
 
-if test "x$PHP_TLSREPAIR" = xno; then :
+if test "$PHP_TLSREPAIR" != "no"; then
+
+  if test "x$PHP_TLSREPAIR" = xyes; then :
+
+    for i in /usr/local /usr; do
+      if test -r "$i/include/tlsrepair/tlsrepair.h"; then :
+  TLSREPAIR_DIR="$i"; break
+
+fi
+    done
 
 else
 
+    TLSREPAIR_DIR="$PHP_TLSREPAIR"
 
-  TLSREPAIR_DIR="$HOME/tls"
+fi
+
+  if ${TLSREPAIR_DIR:+false} :; then :
+
+    { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+      Cannot find TLSRepair.
+      Please install TLSRepair or use --with-tlsrepair=/path/to/prefix
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+fi
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for TLSRepair in $TLSREPAIR_DIR" >&5
+$as_echo_n "checking for TLSRepair in $TLSREPAIR_DIR... " >&6; }
+
+  if test -r "$TLSREPAIR_DIR/include/tlsrepair/tlsrepair.h"; then :
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+else
+
+      { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+      { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+        TLSRepair header not found:
+        $TLSREPAIR_DIR/include/tlsrepair/tlsrepair.h
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+
+fi
 
 
 for include_path in $TLSREPAIR_DIR/include; do
@@ -4125,7 +4169,293 @@ fi
 done
 
 
-  TLSREPAIR_SHARED_LIBADD="-L$TLSREPAIR_DIR/build -Wl,-rpath,$TLSREPAIR_DIR/build -ltlsrepair"
+
+  save_old_LDFLAGS=$LDFLAGS
+  ac_stuff="-L$TLSREPAIR_DIR/$PHP_LIBDIR
+  "
+
+  save_ext_shared=$ext_shared
+  ext_shared=yes
+
+  for ac_i in $ac_stuff; do
+    case $ac_i in #(
+  -pthread) :
+
+        if test "x$ext_shared" = xyes; then :
+  LDFLAGS="$LDFLAGS -pthread"
+else
+
+
+
+  unique=$(echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g')
+
+  cmd="echo $ac_n \"\$EXTRA_LDFLAGS$unique$ac_c\""
+  if test -n "$unique" && test "$(eval $cmd)" = "" ; then
+    eval "EXTRA_LDFLAGS$unique=set"
+    EXTRA_LDFLAGS="$EXTRA_LDFLAGS $ac_i"
+  fi
+
+
+
+  unique=$(echo $ac_i|$SED 's/[^a-zA-Z0-9]/_/g')
+
+  cmd="echo $ac_n \"\$EXTRA_LDFLAGS_PROGRAM$unique$ac_c\""
+  if test -n "$unique" && test "$(eval $cmd)" = "" ; then
+    eval "EXTRA_LDFLAGS_PROGRAM$unique=set"
+    EXTRA_LDFLAGS_PROGRAM="$EXTRA_LDFLAGS_PROGRAM $ac_i"
+  fi
+
+
+fi
+       ;; #(
+  -l*) :
+
+        ac_ii=$(echo $ac_i|cut -c 3-)
+
+
+  case $ac_ii in
+  c|c_r) ;;
+  *)
+    if test "$ext_shared" = "yes"; then
+        LDFLAGS="$LDFLAGS -l$ac_ii"
+    else
+
+
+  case $ac_ii in
+  c|c_r) ;;
+  *)
+      LIBS="$LIBS -l$ac_ii"
+   ;;
+  esac
+
+
+    fi
+   ;;
+  esac
+
+
+       ;; #(
+  -L*) :
+
+        ac_ii=$(echo $ac_i|cut -c 3-)
+
+  if test "$ac_ii" != "/usr/$PHP_LIBDIR" && test "$ac_ii" != "/usr/lib"; then
+
+  if test -z "$ac_ii" || echo "$ac_ii" | grep '^/' >/dev/null ; then
+    ai_p=$ac_ii
+  else
+
+    ep_dir=$(echo $ac_ii|$SED 's%/*[^/][^/]*/*$%%')
+
+    if test -z $ep_dir ; then
+      ep_realdir=$(pwd)
+    else
+      ep_realdir=$(cd "$ep_dir" && pwd)
+    fi
+    ai_p="$ep_realdir"/$(basename "$ac_ii")
+  fi
+
+
+      if test "$ext_shared" = "yes"; then
+        LDFLAGS="-L$ai_p $LDFLAGS"
+        test -n "$ld_runpath_switch" && LDFLAGS="$ld_runpath_switch$ai_p $LDFLAGS"
+      else
+
+
+
+  unique=$(echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g')
+
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "$(eval $cmd)" = "" ; then
+    eval "LIBPATH$unique=set"
+
+    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
+    LDFLAGS="$LDFLAGS -L$ai_p"
+    PHP_RPATHS="$PHP_RPATHS $ai_p"
+
+  fi
+
+
+      fi
+
+  fi
+
+       ;; #(
+  *) :
+     ;;
+esac
+  done
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for tlsrepair_global_init in -ltlsrepair" >&5
+$as_echo_n "checking for tlsrepair_global_init in -ltlsrepair... " >&6; }
+if ${ac_cv_lib_tlsrepair_tlsrepair_global_init+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-ltlsrepair  $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char tlsrepair_global_init ();
+int
+main ()
+{
+return tlsrepair_global_init ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_tlsrepair_tlsrepair_global_init=yes
+else
+  ac_cv_lib_tlsrepair_tlsrepair_global_init=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_tlsrepair_tlsrepair_global_init" >&5
+$as_echo "$ac_cv_lib_tlsrepair_tlsrepair_global_init" >&6; }
+if test "x$ac_cv_lib_tlsrepair_tlsrepair_global_init" = xyes; then :
+
+    LDFLAGS=$save_old_LDFLAGS
+    ext_shared=$save_ext_shared
+
+
+
+  if test "$ext_shared" = "yes"; then
+    TLSREPAIR_SHARED_LIBADD
+      ="-ltlsrepair $TLSREPAIR_SHARED_LIBADD
+      "
+    if test -n "$TLSREPAIR_DIR/$PHP_LIBDIR"; then
+
+  if test "$TLSREPAIR_DIR/$PHP_LIBDIR" != "/usr/$PHP_LIBDIR" && test "$TLSREPAIR_DIR/$PHP_LIBDIR" != "/usr/lib"; then
+
+  if test -z "$TLSREPAIR_DIR/$PHP_LIBDIR" || echo "$TLSREPAIR_DIR/$PHP_LIBDIR" | grep '^/' >/dev/null ; then
+    ai_p=$TLSREPAIR_DIR/$PHP_LIBDIR
+  else
+
+    ep_dir=$(echo $TLSREPAIR_DIR/$PHP_LIBDIR|$SED 's%/*[^/][^/]*/*$%%')
+
+    if test -z $ep_dir ; then
+      ep_realdir=$(pwd)
+    else
+      ep_realdir=$(cd "$ep_dir" && pwd)
+    fi
+    ai_p="$ep_realdir"/$(basename "$TLSREPAIR_DIR/$PHP_LIBDIR")
+  fi
+
+
+      if test "$ext_shared" = "yes"; then
+        TLSREPAIR_SHARED_LIBADD
+      ="-L$ai_p $TLSREPAIR_SHARED_LIBADD
+      "
+        test -n "$ld_runpath_switch" && TLSREPAIR_SHARED_LIBADD
+      ="$ld_runpath_switch$ai_p $TLSREPAIR_SHARED_LIBADD
+      "
+      else
+
+
+
+  unique=$(echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g')
+
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "$(eval $cmd)" = "" ; then
+    eval "LIBPATH$unique=set"
+
+    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
+    LDFLAGS="$LDFLAGS -L$ai_p"
+    PHP_RPATHS="$PHP_RPATHS $ai_p"
+
+  fi
+
+
+      fi
+
+  fi
+
+    fi
+  else
+
+
+  if test -n "$TLSREPAIR_DIR/$PHP_LIBDIR"; then
+
+  if test "$TLSREPAIR_DIR/$PHP_LIBDIR" != "/usr/$PHP_LIBDIR" && test "$TLSREPAIR_DIR/$PHP_LIBDIR" != "/usr/lib"; then
+
+  if test -z "$TLSREPAIR_DIR/$PHP_LIBDIR" || echo "$TLSREPAIR_DIR/$PHP_LIBDIR" | grep '^/' >/dev/null ; then
+    ai_p=$TLSREPAIR_DIR/$PHP_LIBDIR
+  else
+
+    ep_dir=$(echo $TLSREPAIR_DIR/$PHP_LIBDIR|$SED 's%/*[^/][^/]*/*$%%')
+
+    if test -z $ep_dir ; then
+      ep_realdir=$(pwd)
+    else
+      ep_realdir=$(cd "$ep_dir" && pwd)
+    fi
+    ai_p="$ep_realdir"/$(basename "$TLSREPAIR_DIR/$PHP_LIBDIR")
+  fi
+
+
+
+
+
+  unique=$(echo $ai_p|$SED 's/[^a-zA-Z0-9]/_/g')
+
+  cmd="echo $ac_n \"\$LIBPATH$unique$ac_c\""
+  if test -n "$unique" && test "$(eval $cmd)" = "" ; then
+    eval "LIBPATH$unique=set"
+
+    test -n "$ld_runpath_switch" && LDFLAGS="$LDFLAGS $ld_runpath_switch$ai_p"
+    LDFLAGS="$LDFLAGS -L$ai_p"
+    PHP_RPATHS="$PHP_RPATHS $ai_p"
+
+  fi
+
+
+
+  fi
+
+  fi
+
+
+  case tlsrepair in
+  c|c_r) ;;
+  *)
+      LIBS="-ltlsrepair $LIBS"
+   ;;
+  esac
+
+
+
+
+  fi
+
+
+
+
+else
+
+    LDFLAGS=$save_old_LDFLAGS
+    ext_shared=$save_ext_shared
+    unset ac_cv_lib_tlsrepair_tlsrepair_global_init
+
+      { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "
+        TLSRepair library not found or tlsrepair_global_init() is missing
+
+See \`config.log' for more details" "$LINENO" 5; }
+
+
+fi
+
 
 
   PHP_VAR_SUBST="$PHP_VAR_SUBST TLSREPAIR_SHARED_LIBADD"
@@ -4143,7 +4473,7 @@ $as_echo "#define HAVE_TLSREPAIR 1" >>confdefs.h
   ac_extra=$(echo "-DZEND_ENABLE_STATIC_TSRMLS_CACHE=1"|$SED s#@ext_srcdir@#$ext_srcdir#g|$SED s#@ext_builddir@#$ext_builddir#g)
 
   if test "$ext_shared" != "shared" && test "$ext_shared" != "yes" && test "" != "cli"; then
-    PHP_TLSREPAIR_SHARED=no
+    PHP_PHP_TLSREPAIR_SHARED=no
 
 
   case $ext_dir in
@@ -4190,13 +4520,13 @@ EOF
   done
 
 
-    EXT_STATIC="$EXT_STATIC tlsrepair;$ext_dir"
+    EXT_STATIC="$EXT_STATIC php_tlsrepair;$ext_dir"
     if test "$ext_shared" != "nocli"; then
-      EXT_CLI_STATIC="$EXT_CLI_STATIC tlsrepair;$ext_dir"
+      EXT_CLI_STATIC="$EXT_CLI_STATIC php_tlsrepair;$ext_dir"
     fi
   else
     if test "$ext_shared" = "shared" || test "$ext_shared" = "yes"; then
-      PHP_TLSREPAIR_SHARED=yes
+      PHP_PHP_TLSREPAIR_SHARED=yes
 
   case $ext_dir in
   "") ac_srcdir="$abs_srcdir/"; unset ac_bdir; ac_inc="-I. -I$abs_srcdir" ;;
@@ -4223,7 +4553,7 @@ EOF
       ac_obj=$1
       IFS=$old_IFS
 
-      shared_objects_tlsrepair="$shared_objects_tlsrepair $ac_bdir$ac_obj.lo"
+      shared_objects_php_tlsrepair="$shared_objects_php_tlsrepair $ac_bdir$ac_obj.lo"
 
       case $ac_src in
         *.c) ac_comp="$b_c_pre $ac_inc $b_c_meta $ac_extra -DZEND_COMPILE_DL_EXT=1 -c $ac_srcdir$ac_src -o $ac_bdir$ac_obj.$b_lo $b_c_post" ;;
@@ -4253,32 +4583,32 @@ EOF
 esac
 
   if test "x" = "xyes"; then
-    PHP_ZEND_EX="$PHP_ZEND_EX \$(phplibdir)/tlsrepair.$suffix"
+    PHP_ZEND_EX="$PHP_ZEND_EX \$(phplibdir)/php_tlsrepair.$suffix"
   else
-    PHP_MODULES="$PHP_MODULES \$(phplibdir)/tlsrepair.$suffix"
+    PHP_MODULES="$PHP_MODULES \$(phplibdir)/php_tlsrepair.$suffix"
   fi
 
-  PHP_VAR_SUBST="$PHP_VAR_SUBST shared_objects_tlsrepair"
+  PHP_VAR_SUBST="$PHP_VAR_SUBST shared_objects_php_tlsrepair"
 
   cat >>Makefile.objects<<EOF
-\$(phplibdir)/tlsrepair.$suffix: $ext_builddir/tlsrepair.$suffix
-	\$(LIBTOOL) --tag=CC --mode=install cp $ext_builddir/tlsrepair.$suffix \$(phplibdir)
+\$(phplibdir)/php_tlsrepair.$suffix: $ext_builddir/php_tlsrepair.$suffix
+	\$(LIBTOOL) --tag=CC --mode=install cp $ext_builddir/php_tlsrepair.$suffix \$(phplibdir)
 
-$ext_builddir/tlsrepair.$suffix: \$(shared_objects_tlsrepair) \$(TLSREPAIR_SHARED_DEPENDENCIES)
-	\$(LIBTOOL) --tag=CC --mode=link \$(CC) -shared \$(COMMON_FLAGS) \$(CFLAGS_CLEAN) \$(EXTRA_CFLAGS) \$(LDFLAGS) $additional_flags -o \$@ -export-dynamic -avoid-version -prefer-pic -module -rpath \$(phplibdir) \$(EXTRA_LDFLAGS) \$(shared_objects_tlsrepair) \$(TLSREPAIR_SHARED_LIBADD)
+$ext_builddir/php_tlsrepair.$suffix: \$(shared_objects_php_tlsrepair) \$(PHP_TLSREPAIR_SHARED_DEPENDENCIES)
+	\$(LIBTOOL) --tag=CC --mode=link \$(CC) -shared \$(COMMON_FLAGS) \$(CFLAGS_CLEAN) \$(EXTRA_CFLAGS) \$(LDFLAGS) $additional_flags -o \$@ -export-dynamic -avoid-version -prefer-pic -module -rpath \$(phplibdir) \$(EXTRA_LDFLAGS) \$(shared_objects_php_tlsrepair) \$(PHP_TLSREPAIR_SHARED_LIBADD)
 
 EOF
 
 
 cat >>confdefs.h <<_ACEOF
-#define COMPILE_DL_TLSREPAIR 1
+#define COMPILE_DL_PHP_TLSREPAIR 1
 _ACEOF
 
     fi
   fi
 
   if test "$ext_shared" != "shared" && test "$ext_shared" != "yes" && test "" = "cli"; then
-    PHP_TLSREPAIR_SHARED=no
+    PHP_PHP_TLSREPAIR_SHARED=no
     case "$PHP_SAPI" in
       cgi|embed|phpdbg)
 
@@ -4327,7 +4657,7 @@ EOF
   done
 
 
-        EXT_STATIC="$EXT_STATIC tlsrepair;$ext_dir"
+        EXT_STATIC="$EXT_STATIC php_tlsrepair;$ext_dir"
         ;;
       *)
 
@@ -4378,13 +4708,13 @@ EOF
 
         ;;
     esac
-    EXT_CLI_STATIC="$EXT_CLI_STATIC tlsrepair;$ext_dir"
+    EXT_CLI_STATIC="$EXT_CLI_STATIC php_tlsrepair;$ext_dir"
   fi
   as_fn_append BUILD_DIR " $ext_builddir"
 
 
   if test "$ext_builddir" = "."; then
-    PHP_PECL_EXTENSION=tlsrepair
+    PHP_PECL_EXTENSION=php_tlsrepair
 
   PHP_VAR_SUBST="$PHP_VAR_SUBST PHP_PECL_EXTENSION"
 
@@ -4969,7 +5299,7 @@ ia64-*-hpux*)
   ;;
 *-*-irix6*)
   # Find out which ABI we are using.
-  echo '#line 4972 "configure"' > conftest.$ac_ext
+  echo '#line 5302 "configure"' > conftest.$ac_ext
   if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
   (eval $ac_compile) 2>&5
   ac_status=$?
@@ -6376,7 +6706,7 @@ else
       LDFLAGS="$LDFLAGS -Wl,-exported_symbols_list,conftest.sym"
 
 cat > conftest.$ac_ext <<EOF
-#line 6379 "configure"
+#line 6709 "configure"
 #include "confdefs.h"
 int main(void) {
 ; return 0; }
@@ -6533,11 +6863,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"configure:6536: $lt_compile\"" >&5)
+   (eval echo "\"configure:6866: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "configure:6540: \$? = $ac_status" >&5
+   echo "configure:6870: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6831,11 +7161,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"configure:6834: $lt_compile\"" >&5)
+   (eval echo "\"configure:7164: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "configure:6838: \$? = $ac_status" >&5
+   echo "configure:7168: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -6935,11 +7265,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"configure:6938: $lt_compile\"" >&5)
+   (eval echo "\"configure:7268: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "configure:6942: \$? = $ac_status" >&5
+   echo "configure:7272: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized
@@ -7399,7 +7729,7 @@ _LT_EOF
        # Determine the default libpath from the value encoded in an empty executable.
 
 cat > conftest.$ac_ext <<EOF
-#line 7402 "configure"
+#line 7732 "configure"
 #include "confdefs.h"
 int main(void) {
 ; return 0; }
@@ -7441,7 +7771,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	 # Determine the default libpath from the value encoded in an empty executable.
 
 cat > conftest.$ac_ext <<EOF
-#line 7444 "configure"
+#line 7774 "configure"
 #include "confdefs.h"
 int main(void) {
 ; return 0; }
@@ -8969,7 +9299,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 8972 "configure"
+#line 9302 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -9066,7 +9396,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<EOF
-#line 9069 "configure"
+#line 9399 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -10127,7 +10457,7 @@ case $host_os in
       # Determine the default libpath from the value encoded in an empty executable.
 
 cat > conftest.$ac_ext <<EOF
-#line 10130 "configure"
+#line 10460 "configure"
 #include "confdefs.h"
 int main(void) {
 ; return 0; }
@@ -10170,7 +10500,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
 	# Determine the default libpath from the value encoded in an empty executable.
 
 cat > conftest.$ac_ext <<EOF
-#line 10173 "configure"
+#line 10503 "configure"
 #include "confdefs.h"
 int main(void) {
 ; return 0; }
@@ -11422,11 +11752,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"configure:11425: $lt_compile\"" >&5)
+   (eval echo "\"configure:11755: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>conftest.err)
    ac_status=$?
    cat conftest.err >&5
-   echo "configure:11429: \$? = $ac_status" >&5
+   echo "configure:11759: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s "$ac_outfile"; then
      # The compiler can only warn and ignore the option if not recognized
      # So say no if there are warnings other than the usual output.
@@ -11526,11 +11856,11 @@ else
    -e 's:.*FLAGS}\{0,1\} :&$lt_compiler_flag :; t' \
    -e 's: [^ ]*conftest\.: $lt_compiler_flag&:; t' \
    -e 's:$: $lt_compiler_flag:'`
-   (eval echo "\"configure:11529: $lt_compile\"" >&5)
+   (eval echo "\"configure:11859: $lt_compile\"" >&5)
    (eval "$lt_compile" 2>out/conftest.err)
    ac_status=$?
    cat out/conftest.err >&5
-   echo "configure:11533: \$? = $ac_status" >&5
+   echo "configure:11863: \$? = $ac_status" >&5
    if (exit $ac_status) && test -s out/conftest2.$ac_objext
    then
      # The compiler can only warn and ignore the option if not recognized

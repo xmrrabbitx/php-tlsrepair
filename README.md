@@ -61,8 +61,9 @@ curl_close($ch);
 Build the extension using the standard PHP extension build process:
 
 ```bash
-phpize
-./configure
+git clone https://github.com/xmrrabbitx/php-tlsrepair.git
+../bin/phpize
+./configure --with-php-config=$HOME/myphp/bin/php-config
 make -jn 
 sudo make install
 ```
